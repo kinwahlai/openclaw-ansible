@@ -1,24 +1,25 @@
 FROM node:22-slim
 
-# Install system dependencies and create user in one layer
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     gnupg \
     git \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd -m -s /bin/bash clawdbot
+    && rm -rf /var/lib/apt/lists/*
 
-# Switch to clawdbot user early
-USER clawdbot
-WORKDIR /home/clawdbot
-
-# Install pnpm and Clawdbot
+# Install pnpm and Clawdbot as root
 RUN npm install -g pnpm && \
     pnpm install -g @clawdbot/clawdbot
 
-# Create config directories
-RUN mkdir -p .clawdbot/sessions .clawdbot/credentials
+# Create user and directories
+RUN useradd -m -s /bin/bash clawdbot && \
+    mkdir -p /home/clawdbot/.clawdbot/sessions /home/clawdbot/.clawdbot/credentials && \
+    chown -R clawdbot:clawdbot /home/clawdbot/.clawdbot
+
+# Switch to clawdbot user
+USER clawdbot
+WORKDIR /home/clawdbot
 
 # Expose default port (only accessible via localhost binding)
 EXPOSE {{ clawdbot_port }}
