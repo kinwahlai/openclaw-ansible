@@ -1,5 +1,5 @@
 ---
-- name: Install Clawdbot with Docker and UFW firewall
+- name: Install OpenClaw with Docker and UFW firewall
   hosts: localhost
   connection: local
   become: true
@@ -195,4 +195,4 @@
 
     - name: Notify that playbook is complete
       ansible.builtin.debug:
-        msg: "✅ Clawdbot installation complete!"
+        msg: "✅ OpenClaw installation complete!"
