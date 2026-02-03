@@ -3,7 +3,7 @@
 
 - name: Install OpenClaw globally as openclaw user (using pnpm)
   ansible.builtin.shell:
-    cmd: pnpm install -g clawdbot@latest
+    cmd: pnpm install -g openclaw@latest
     executable: /bin/bash
   become: true
   become_user: "{{ openclaw_user }}"
@@ -16,7 +16,7 @@
 
 - name: Verify openclaw installation
   ansible.builtin.shell:
-    cmd: "{{ openclaw_home }}/.local/bin/clawdbot --version"
+    cmd: "{{ openclaw_home }}/.local/bin/openclaw --version"
     executable: /bin/bash
   become: true
   become_user: "{{ openclaw_user }}"

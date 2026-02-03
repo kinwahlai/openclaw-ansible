@@ -85,13 +85,13 @@
 
 - name: Remove existing global openclaw symlink (if any)
   ansible.builtin.file:
-    path: "{{ openclaw_home }}/.local/bin/clawdbot"
+    path: "{{ openclaw_home }}/.local/bin/openclaw"
     state: absent
 
 - name: Create symlink to openclaw binary
   ansible.builtin.file:
-    src: "{{ openclaw_repo_dir }}/bin/clawdbot.js"
-    dest: "{{ openclaw_home }}/.local/bin/clawdbot"
+    src: "{{ openclaw_repo_dir }}/bin/openclaw.js"
+    dest: "{{ openclaw_home }}/.local/bin/openclaw"
     state: link
     owner: "{{ openclaw_user }}"
     group: "{{ openclaw_user }}"
@@ -99,14 +99,14 @@
 
 - name: Make openclaw binary executable
   ansible.builtin.file:
-    path: "{{ openclaw_repo_dir }}/bin/clawdbot.js"
+    path: "{{ openclaw_repo_dir }}/bin/openclaw.js"
     mode: '0755'
     owner: "{{ openclaw_user }}"
     group: "{{ openclaw_user }}"
 
 - name: Verify openclaw installation from development build
   ansible.builtin.shell:
-    cmd: "{{ openclaw_home }}/.local/bin/clawdbot --version"
+    cmd: "{{ openclaw_home }}/.local/bin/openclaw --version"
     executable: /bin/bash
   become: true
   become_user: "{{ openclaw_user }}"
@@ -120,7 +120,7 @@
     msg: |
       OpenClaw installed from source: {{ openclaw_dev_version.stdout }}
       Repository: {{ openclaw_repo_dir }}
-      Binary: {{ openclaw_home }}/.local/bin/clawdbot -> {{ openclaw_repo_dir }}/bin/clawdbot.js
+      Binary: {{ openclaw_home }}/.local/bin/openclaw -> {{ openclaw_repo_dir }}/bin/openclaw.js
 
 - name: Add development mode info to .bashrc
   ansible.builtin.blockinfile:
@@ -128,12 +128,12 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - OpenClaw development"
     block: |
       # OpenClaw development mode
-      export CLAWDBOT_DEV_DIR="{{ openclaw_repo_dir }}"
+      export OPENCLAW_DEV_DIR="{{ openclaw_repo_dir }}"
 
       # Aliases for development
-      alias clawdbot-rebuild='cd {{ openclaw_repo_dir }} && pnpm build'
-      alias clawdbot-dev='cd {{ openclaw_repo_dir }}'
-      alias clawdbot-pull='cd {{ openclaw_repo_dir }} && git pull && pnpm install && pnpm build'
+      alias openclaw-rebuild='cd {{ openclaw_repo_dir }} && pnpm build'
+      alias openclaw-dev='cd {{ openclaw_repo_dir }}'
+      alias openclaw-pull='cd {{ openclaw_repo_dir }} && git pull && pnpm install && pnpm build'
     create: true
     owner: "{{ openclaw_user }}"
     group: "{{ openclaw_user }}"
