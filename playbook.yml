@@ -41,6 +41,7 @@
         cache_valid_time: 3600
       when: is_debian
       register: apt_upgrade_result
+      ignore_errors: true
 
     - name: Display apt upgrade results
       ansible.builtin.debug:
@@ -78,15 +79,16 @@
         creates: "{{ '/opt/homebrew/bin/brew' if is_macos else '/home/linuxbrew/.linuxbrew/bin/brew' }}"
       when: not homebrew_check.stat.exists
       register: homebrew_install
+      become: false
 
     - name: Add Homebrew to PATH for current session (Linux)
       ansible.builtin.set_fact:
-        ansible_env: "{{ ansible_env | combine({'PATH': '/home/linuxbrew/.linuxbrew/bin:' + ansible_env.PATH}) }}"
+        ansible_env: "{{ ansible_env | combine({'PATH': '/home/linuxbrew/.linuxbrew/bin:' + (ansible_env.PATH | default(lookup('env', 'PATH')))}) }}"
       when: is_linux and not is_macos
 
     - name: Add Homebrew to PATH for current session (macOS)
       ansible.builtin.set_fact:
-        ansible_env: "{{ ansible_env | combine({'PATH': '/opt/homebrew/bin:' + ansible_env.PATH}) }}"
+        ansible_env: "{{ ansible_env | combine({'PATH': '/opt/homebrew/bin:' + (ansible_env.PATH | default(lookup('env', 'PATH')))}) }}"
       when: is_macos
 
     - name: Display Homebrew installation status
