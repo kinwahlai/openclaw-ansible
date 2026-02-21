@@ -9,6 +9,12 @@ ci_test: false
 tailscale_enabled: false  # Set to true to install and configure Tailscale
 tailscale_authkey: ""  # Optional: set to auto-connect during installation
 
+# Ollama settings
+ollama_enabled: true  # Set to true to install Ollama
+ollama_version: "latest"  # Version to install (default: latest)
+ollama_host: "127.0.0.1:11434"  # Bind address for Ollama service
+
+
 # Node.js version
 nodejs_version: "22.x"
 

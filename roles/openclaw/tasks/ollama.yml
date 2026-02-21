@@ -1,0 +1,52 @@
+---
+# Install and configure Ollama for local LLM inference
+
+- name: Check if Ollama is already installed
+  ansible.builtin.command: which ollama
+  register: ollama_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Create Ollama user
+  ansible.builtin.user:
+    name: ollama
+    system: true
+    shell: /bin/false
+    home: /usr/share/ollama
+    create_home: true
+
+- name: Install Ollama (via official script)
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://ollama.com/install.sh | sh
+  when: ollama_check.rc != 0
+  register: ollama_install
+  changed_when: "'Ollama is already installed' not in ollama_install.stdout"
+
+- name: Create Ollama systemd service directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/ollama.service.d
+    state: directory
+    mode: '0755'
+
+- name: Configure Ollama service environment
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ollama.service.d/environment.conf
+    content: |
+      [Service]
+      Environment="OLLAMA_HOST={{ ollama_host }}"
+      Environment="OLLAMA_MODELS=/usr/share/ollama/.ollama/models"
+    mode: '0644'
+  notify: Restart ollama
+
+- name: Enable and start Ollama service
+  ansible.builtin.systemd:
+    name: ollama
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Wait for Ollama to be ready
+  ansible.builtin.wait_for:
+    port: 11434
+    host: 127.0.0.1
+    timeout: 30

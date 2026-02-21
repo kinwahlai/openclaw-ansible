@@ -13,8 +13,13 @@
   ansible.builtin.include_tasks: docker-linux.yml
   when: not ci_test
 
+- name: Include Ollama installation tasks
+  ansible.builtin.include_tasks: ollama.yml
+  when: ollama_enabled | bool and not ci_test
+
 - name: Include firewall configuration tasks
   ansible.builtin.include_tasks: firewall-linux.yml
+
   when: not ci_test
 
 - name: Include Node.js installation tasks

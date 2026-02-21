@@ -1,0 +1,39 @@
+---
+# Install and configure Homebrew on Linux
+# Note: Dependencies (curl, git, etc.) are installed in system-tools-linux.yml
+
+- name: Check if Homebrew is already installed
+  ansible.builtin.stat:
+    path: /home/linuxbrew/.linuxbrew/bin/brew
+  register: homebrew_check
+
+- name: Install Homebrew (Linux)
+  ansible.builtin.shell:
+    cmd: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  environment:
+    NONINTERACTIVE: "1"
+  args:
+    creates: /home/linuxbrew/.linuxbrew/bin/brew
+  when: not homebrew_check.stat.exists
+  # Run as the connecting user (not root) if possible, but playbook usually runs as root.
+  # If running as root, Homebrew installation is discouraged but possible.
+  # We assume the user knows what they are doing if running as root.
+  # To run as a specific user, use 'become: yes' and 'become_user: <user>' 
+  # but we don't know the non-root user here if connected as root.
+  # So we run as is (likely root or sudo user).
+  
+- name: Add Homebrew to system-wide profile
+  ansible.builtin.blockinfile:
+    path: /etc/profile.d/homebrew.sh
+    create: true
+    mode: '0644'
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Homebrew"
+    block: |
+      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  
+- name: Add Homebrew to current user bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Homebrew"
+    block: |
+      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
