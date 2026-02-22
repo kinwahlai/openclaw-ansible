@@ -7,6 +7,14 @@
     path: /home/linuxbrew/.linuxbrew/bin/brew
   register: homebrew_check
 
+- name: Create Homebrew directory
+  ansible.builtin.file:
+    path: /home/linuxbrew
+    state: directory
+    owner: "{{ openclaw_user }}"
+    group: "{{ openclaw_user }}"
+    mode: '0755'
+
 - name: Install Homebrew (Linux)
   ansible.builtin.shell:
     cmd: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -15,12 +23,8 @@
   args:
     creates: /home/linuxbrew/.linuxbrew/bin/brew
   when: not homebrew_check.stat.exists
-  # Run as the connecting user (not root) if possible, but playbook usually runs as root.
-  # If running as root, Homebrew installation is discouraged but possible.
-  # We assume the user knows what they are doing if running as root.
-  # To run as a specific user, use 'become: yes' and 'become_user: <user>' 
-  # but we don't know the non-root user here if connected as root.
-  # So we run as is (likely root or sudo user).
+  become: true
+  become_user: "{{ openclaw_user }}"
   
 - name: Add Homebrew to system-wide profile
   ansible.builtin.blockinfile:
@@ -31,9 +35,13 @@
     block: |
       eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
   
-- name: Add Homebrew to current user bashrc
+- name: Add Homebrew to openclaw user bashrc
   ansible.builtin.blockinfile:
-    path: "{{ ansible_env.HOME }}/.bashrc"
+    path: "{{ openclaw_home }}/.bashrc"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - Homebrew"
     block: |
       eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    owner: "{{ openclaw_user }}"
+    group: "{{ openclaw_user }}"
+    mode: '0644'
+

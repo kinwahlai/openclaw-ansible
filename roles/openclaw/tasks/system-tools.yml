@@ -4,11 +4,6 @@
 - name: Include Linux system tools installation
   ansible.builtin.include_tasks: system-tools-linux.yml
 
-- name: Include Homebrew installation (Linux)
-  ansible.builtin.include_tasks: homebrew-linux.yml
-  when: ansible_system == 'Linux' and not ci_test
-
-
 # Common tasks for all operating systems
 
 - name: Configure git globally

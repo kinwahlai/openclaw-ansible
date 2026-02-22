@@ -9,7 +9,12 @@
 - name: Include user creation tasks
   ansible.builtin.include_tasks: user.yml
 
+- name: Include Homebrew installation (Linux)
+  ansible.builtin.include_tasks: homebrew-linux.yml
+  when: ansible_system == 'Linux' and not ci_test
+
 - name: Include Docker installation tasks
+
   ansible.builtin.include_tasks: docker-linux.yml
   when: not ci_test
 
