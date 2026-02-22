@@ -8,3 +8,9 @@
   ansible.builtin.systemd:
     name: fail2ban
     state: restarted
+
+- name: Restart ollama
+  ansible.builtin.systemd:
+    name: ollama
+    state: restarted
+

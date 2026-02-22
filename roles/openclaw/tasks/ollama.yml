@@ -2,9 +2,9 @@
 # Install and configure Ollama for local LLM inference
 
 - name: Check if Ollama is already installed
-  ansible.builtin.command: which ollama
+  ansible.builtin.shell: command -v ollama
   register: ollama_check
-  ignore_errors: true
+  failed_when: false
   changed_when: false
 
 - name: Create Ollama user
