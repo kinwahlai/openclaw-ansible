@@ -192,3 +192,24 @@
     group: openclaw
     mode: '0644'
   when: ansible_os_family == 'Debian' and not ci_test
+
+- name: Create shell login reminder for openclaw user switch
+  ansible.builtin.copy:
+    dest: /etc/profile.d/99-openclaw-reminder.sh
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      #!/bin/bash
+      # Only show on interactive shells
+      if [[ $- == *i* ]] && [[ "$USER" != "openclaw" ]]; then
+          echo ""
+          echo " 🔄 SWITCH TO OPENCLAW USER with:"
+          echo ""
+          echo "     sudo su - openclaw"
+          echo ""
+          echo "   OR (alternative):"
+          echo ""
+          echo "     sudo -u openclaw -i"
+          echo ""
+      fi
