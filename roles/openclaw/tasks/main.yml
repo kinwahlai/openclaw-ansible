@@ -30,5 +30,10 @@
 - name: Include Node.js installation tasks
   ansible.builtin.include_tasks: nodejs.yml
 
+- name: Include Playwright installation tasks
+  ansible.builtin.include_tasks: playwright.yml
+  when: not ci_test
+
 - name: Include OpenClaw setup tasks
+
   ansible.builtin.include_tasks: openclaw.yml

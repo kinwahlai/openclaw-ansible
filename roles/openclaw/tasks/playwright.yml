@@ -1,0 +1,26 @@
+---
+# Install Playwright and its dependencies
+
+- name: Install Playwright system dependencies (Chromium)
+  ansible.builtin.shell:
+    cmd: npx -y playwright install-deps chromium
+  environment:
+    PLAYWRIGHT_BROWSERS_PATH: /home/openclaw/.cache/ms-playwright
+    # We set this to ensure the installation goes to the right place or just to make sure it works.
+    # Actually, install-deps installs system packages via apt, so path doesn't matter much for binaries,
+    # but it needs to know *which* chromium version to check deps for.
+    # npx downloads the latest playwright package, which knows the latest chromium deps.
+  register: playwright_deps_install
+  changed_when: "'Installing dependencies' in playwright_deps_install.stdout"
+  # This runs as root (default for Ansible) so it can install apt packages.
+
+- name: Install Playwright Chromium browser for openclaw user
+  ansible.builtin.shell:
+    cmd: npx -y playwright install chromium
+  become: true
+  become_user: openclaw
+  environment:
+    # Ensure it uses openclaw's home for cache
+    HOME: /home/openclaw
+  register: playwright_browser_install
+  changed_when: "'downloading' in playwright_browser_install.stdout"
