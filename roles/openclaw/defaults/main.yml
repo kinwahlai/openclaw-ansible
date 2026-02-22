@@ -13,6 +13,9 @@ tailscale_authkey: ""  # Optional: set to auto-connect during installation
 ollama_enabled: true  # Set to true to install Ollama
 ollama_version: "latest"  # Version to install (default: latest)
 ollama_host: "127.0.0.1:11434"  # Bind address for Ollama service
+ollama_flash_attention: "1"  # Enable Flash Attention (1=on, 0=off)
+ollama_num_parallel: "2"     # Number of parallel requests to handle
+
 
 
 # Node.js version
