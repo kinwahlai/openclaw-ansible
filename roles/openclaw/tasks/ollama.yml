@@ -37,6 +37,9 @@
       Environment="OLLAMA_MODELS=/usr/share/ollama/.ollama/models"
       Environment="OLLAMA_FLASH_ATTENTION={{ ollama_flash_attention }}"
       Environment="OLLAMA_NUM_PARALLEL={{ ollama_num_parallel }}"
+      Environment="OLLAMA_MAX_LOADED_MODELS={{ ollama_num_parallel }}"
+      Environment="OLLAMA_CONTEXT_LENGTH={{ ollama_context_length }}"
+
     mode: '0644'
   notify: Restart ollama
 

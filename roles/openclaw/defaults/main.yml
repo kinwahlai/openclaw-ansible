@@ -15,6 +15,8 @@ ollama_version: "latest"  # Version to install (default: latest)
 ollama_host: "127.0.0.1:11434"  # Bind address for Ollama service
 ollama_flash_attention: "1"  # Enable Flash Attention (1=on, 0=off)
 ollama_num_parallel: "2"     # Number of parallel requests to handle
+ollama_context_length: "16384" # Default context length for models (default: 4096)
+
 
 
 
