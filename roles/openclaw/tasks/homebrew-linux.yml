@@ -45,3 +45,13 @@
     group: "{{ openclaw_user }}"
     mode: '0644'
 
+- name: Install Codex via Homebrew
+  community.general.homebrew:
+    name: codex
+    state: present
+  become: true
+  become_user: "{{ openclaw_user }}"
+  environment:
+    PATH: "/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin"
+
+
