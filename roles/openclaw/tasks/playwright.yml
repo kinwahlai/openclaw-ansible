@@ -1,6 +1,22 @@
 ---
 # Install Playwright and its dependencies
 
+- name: Install system Chromium (Ubuntu/Debian)
+  ansible.builtin.apt:
+    name: chromium-browser
+    state: present
+    update_cache: true
+  ignore_errors: true
+  register: chromium_browser_install
+
+- name: Install system Chromium (Fallback)
+  ansible.builtin.apt:
+    name: chromium
+    state: present
+  when: chromium_browser_install.failed
+  ignore_errors: true
+
+
 - name: Install Playwright system dependencies (Chromium)
   ansible.builtin.shell:
     cmd: npx -y playwright install-deps chromium
