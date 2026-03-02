@@ -15,10 +15,10 @@
     home: /usr/share/ollama
     create_home: true
 
-- name: Install Ollama (via official script)
+- name: Install or Update Ollama (via official script)
   ansible.builtin.shell:
     cmd: curl -fsSL https://ollama.com/install.sh | sh
-  when: ollama_check.rc != 0
+  when: ollama_check.rc != 0 or ollama_update | default(false) | bool
   register: ollama_install
   changed_when: "'Ollama is already installed' not in ollama_install.stdout"
 
