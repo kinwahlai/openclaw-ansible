@@ -20,7 +20,11 @@
 
 - name: Include Ollama installation tasks
   ansible.builtin.include_tasks: ollama.yml
+  args:
+    apply:
+      tags: ollama
   when: ollama_enabled | bool and not ci_test
+  tags: ollama
 
 - name: Include firewall configuration tasks
   ansible.builtin.include_tasks: firewall-linux.yml

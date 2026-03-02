@@ -39,6 +39,7 @@
       Environment="OLLAMA_NUM_PARALLEL={{ ollama_num_parallel }}"
       Environment="OLLAMA_MAX_LOADED_MODELS={{ ollama_num_parallel }}"
       Environment="OLLAMA_CONTEXT_LENGTH={{ ollama_context_length }}"
+      Environment="OLLAMA_KEEP_ALIVE={{ ollama_keep_alive }}"
 
     mode: '0644'
   notify: Restart ollama
