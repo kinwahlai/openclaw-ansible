@@ -1,0 +1,200 @@
+---
+# Uninstall OpenClaw and Ollama
+#
+# Removes:
+#   - OpenClaw systemd service(s), user, home directory, sudoers entry, login reminder
+#   - Ollama service, binary, home directory, system user
+#   - OpenClaw-specific UFW Docker isolation rules and Docker daemon config
+#   - OpenClaw-specific fail2ban jail config
+#
+# Does NOT remove:
+#   - Docker CE, Node.js, pnpm, Tailscale, Homebrew
+#   - UFW, fail2ban, or unattended-upgrades themselves
+#
+# Usage:
+#   ansible-playbook uninstall.yml --ask-become-pass
+#
+# Safe to run multiple times (idempotent).
+
+- name: Uninstall OpenClaw and Ollama
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    openclaw_user: openclaw
+    openclaw_home: /home/openclaw
+    backup_dest: /root
+
+  tasks:
+
+    # ── 1. Backup ─────────────────────────────────────────────────────────────
+
+    - name: Check if openclaw home directory exists
+      ansible.builtin.stat:
+        path: "{{ openclaw_home }}"
+      register: openclaw_home_stat
+
+    - name: Create timestamped backup of openclaw home directory
+      ansible.builtin.shell:
+        cmd: >
+          tar czf {{ backup_dest }}/openclaw-backup-{{ ansible_date_time.epoch }}.tar.gz
+          -C /home openclaw
+        executable: /bin/bash
+      when: openclaw_home_stat.stat.exists
+      changed_when: true
+
+    - name: Display backup location
+      ansible.builtin.debug:
+        msg: "Backup created: {{ backup_dest }}/openclaw-backup-{{ ansible_date_time.epoch }}.tar.gz"
+      when: openclaw_home_stat.stat.exists
+
+    - name: No backup needed (openclaw home not found)
+      ansible.builtin.debug:
+        msg: "{{ openclaw_home }} does not exist — skipping backup."
+      when: not openclaw_home_stat.stat.exists
+
+    # ── 2. Stop openclaw service(s) ───────────────────────────────────────────
+
+    - name: Find openclaw systemd service files
+      ansible.builtin.find:
+        paths: /etc/systemd/system
+        patterns: "openclaw*.service"
+      register: openclaw_service_files
+
+    - name: Stop and disable openclaw service(s)
+      ansible.builtin.systemd:
+        name: "{{ item.path | basename }}"
+        state: stopped
+        enabled: false
+      loop: "{{ openclaw_service_files.files }}"
+      failed_when: false
+
+    - name: Remove openclaw service files
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ openclaw_service_files.files }}"
+
+    # ── 3. Stop and remove Ollama ─────────────────────────────────────────────
+
+    - name: Stop and disable Ollama service
+      ansible.builtin.systemd:
+        name: ollama
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Remove Ollama service drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/ollama.service.d
+        state: absent
+
+    - name: Remove Ollama systemd service file
+      ansible.builtin.file:
+        path: /etc/systemd/system/ollama.service
+        state: absent
+
+    - name: Remove Ollama binary
+      ansible.builtin.file:
+        path: /usr/local/bin/ollama
+        state: absent
+
+    - name: Remove Ollama home directory
+      ansible.builtin.file:
+        path: /usr/share/ollama
+        state: absent
+
+    - name: Remove ollama system user
+      ansible.builtin.user:
+        name: ollama
+        state: absent
+        remove: true
+      failed_when: false
+
+    # ── 4. Remove openclaw user and associated files ──────────────────────────
+
+    - name: Disable lingering for openclaw user
+      ansible.builtin.command: loginctl disable-linger {{ openclaw_user }}
+      failed_when: false
+      changed_when: false
+
+    - name: Remove openclaw system user and home directory
+      ansible.builtin.user:
+        name: "{{ openclaw_user }}"
+        state: absent
+        remove: true
+      failed_when: false
+
+    - name: Remove openclaw sudoers file
+      ansible.builtin.file:
+        path: /etc/sudoers.d/{{ openclaw_user }}
+        state: absent
+
+    - name: Remove openclaw login reminder
+      ansible.builtin.file:
+        path: /etc/profile.d/99-openclaw-reminder.sh
+        state: absent
+
+    # ── 5. Clean up OpenClaw-specific firewall and Docker config ──────────────
+
+    - name: Remove Docker isolation block from UFW after.rules
+      ansible.builtin.blockinfile:
+        path: /etc/ufw/after.rules
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Docker isolation"
+        state: absent
+      failed_when: false
+
+    - name: Check if OpenClaw Docker daemon config exists
+      ansible.builtin.stat:
+        path: /etc/docker/daemon.json
+      register: docker_daemon_stat
+
+    - name: Remove OpenClaw Docker daemon config
+      ansible.builtin.file:
+        path: /etc/docker/daemon.json
+        state: absent
+      when: docker_daemon_stat.stat.exists
+
+    - name: Restart Docker to reset daemon config to defaults
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+      when: docker_daemon_stat.stat.exists
+      failed_when: false
+
+    - name: Reload UFW rules
+      community.general.ufw:
+        state: reloaded
+      failed_when: false
+
+    # ── 6. Remove OpenClaw-specific fail2ban config ───────────────────────────
+
+    - name: Remove OpenClaw fail2ban jail config
+      ansible.builtin.file:
+        path: /etc/fail2ban/jail.local
+        state: absent
+
+    - name: Restart fail2ban
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: restarted
+      failed_when: false
+
+    # ── 7. Final systemd reload ───────────────────────────────────────────────
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Uninstall complete
+      ansible.builtin.debug:
+        msg:
+          - "OpenClaw and Ollama have been removed."
+          - >-
+            {{
+              'Backup saved to: ' + backup_dest + '/openclaw-backup-' + ansible_date_time.epoch + '.tar.gz'
+              if openclaw_home_stat.stat.exists else
+              'No openclaw home directory found — no backup was needed.'
+            }}
+          - "Docker, Node.js, Tailscale, UFW, and fail2ban remain installed."
